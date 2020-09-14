@@ -1,5 +1,4 @@
 import os, sys, time
-
 import numpy as np
 import tensorflow as tf
 import datetime
@@ -27,7 +26,7 @@ tf.app.flags.DEFINE_integer('batch_size', 128, 'Batch size')
 tf.app.flags.DEFINE_integer('seed', 1, 'Seed')
 tf.app.flags.DEFINE_string('train_layers', 'fc8,fc7,fc6,conv5,conv4,conv3,conv2,conv1', 'Finetuning layers, seperated by commas')
 tf.app.flags.DEFINE_string('multi_scale', '256,257', 'As preprocessing; scale the image randomly between 2 numbers and crop randomly at networs input size')
-tf.app.flags.DEFINE_string('train_root_dir', '/home/zhijie/training', 'Root directory to put the training data')
+tf.app.flags.DEFINE_string('train_root_dir', 'data/zhijie/training', 'Root directory to put the training data')
 tf.app.flags.DEFINE_string('source', 'svhn', 'source')
 tf.app.flags.DEFINE_string('target', 'mnist', 'target')
 tf.app.flags.DEFINE_string('tag', 'cat', 'tag')
@@ -65,9 +64,9 @@ def decay(start_rate,epoch,num_epochs):
         return start_rate/pow(1+0.001*epoch,0.75)
 
 def adaptation_factor(x):
-	den=1.0+math.exp(-10*x)
-	lamb=2.0/den-1.0
-	return min(lamb,1.0)
+    den=1.0+math.exp(-10*x)
+    lamb=2.0/den-1.0
+    return min(lamb,1.0)
 def scatter(data, label, dir, file_name, mus=None, mark_size=2):
     if label.ndim == 2:
         label = np.argmax(label, axis=1)
@@ -76,7 +75,7 @@ def scatter(data, label, dir, file_name, mus=None, mark_size=2):
     sns_plot = sns.lmplot('x', 'y', data=df, hue='class', fit_reg=False, scatter_kws={'s':mark_size})
     sns_plot.savefig(os.path.join(dir, file_name))
     if mus is not None:
-        df_mus = pd.DataFrame(data={'x':mus[:,0], 'y':mus[:,1], 'class':np.asarray(xrange(mus.shape[0])).astype(np.int32)})
+        df_mus = pd.DataFrame(data={'x':mus[:,0], 'y':mus[:,1], 'class':np.asarray(range(mus.shape[0])).astype(np.int32)})
         sns_plot_mus = sns.lmplot('x', 'y', data=df_mus, hue='class', fit_reg=False, scatter_kws={'s':mark_size*20})
         sns_plot_mus.savefig(os.path.join(dir, 'mus_'+file_name))
 
@@ -90,12 +89,18 @@ def main(_):
     tensorboard_train_dir = os.path.join(tensorboard_dir, 'train')
     tensorboard_val_dir = os.path.join(tensorboard_dir, 'val')
 
-    if not os.path.isdir(FLAGS.train_root_dir): os.mkdir(FLAGS.train_root_dir)
-    if not os.path.isdir(train_dir): os.mkdir(train_dir)
-    if not os.path.isdir(checkpoint_dir): os.mkdir(checkpoint_dir)
-    if not os.path.isdir(tensorboard_dir): os.mkdir(tensorboard_dir)
-    if not os.path.isdir(tensorboard_train_dir): os.mkdir(tensorboard_train_dir)
-    if not os.path.isdir(tensorboard_val_dir): os.mkdir(tensorboard_val_dir)
+    if not os.path.isdir(FLAGS.train_root_dir): 
+        os.mkdir(FLAGS.train_root_dir)
+    if not os.path.isdir(train_dir): 
+        os.mkdir(train_dir)
+    if not os.path.isdir(checkpoint_dir): 
+        os.mkdir(checkpoint_dir)
+    if not os.path.isdir(tensorboard_dir): 
+        os.mkdir(tensorboard_dir)
+    if not os.path.isdir(tensorboard_train_dir): 
+        os.mkdir(tensorboard_train_dir)
+    if not os.path.isdir(tensorboard_val_dir): 
+        os.mkdir(tensorboard_val_dir)
 
     # Write flags to txt
     flags_file_path = os.path.join(train_dir, 'flags.txt')
@@ -119,7 +124,7 @@ def main(_):
 
     # Model
     train_layers = FLAGS.train_layers.split(',')
-    model = LeNetModel(num_classes=NUM_CLASSES, image_size=28,is_training=is_training,dropout_keep_prob=dropout_keep_prob)
+    model = LeNetModel(num_classes=NUM_CLASSES, image_size=32,is_training=is_training,dropout_keep_prob=dropout_keep_prob)
     # Placeholders
     if FLAGS.source == "svhn":
         x_s = tf.placeholder(tf.float32, [None, 32, 32, 3],name='x')
@@ -135,12 +140,13 @@ def main(_):
     xt=preprocessing(x_t,model)
     tf.summary.image('Source Images',x)
     tf.summary.image('Target Images',xt)
-    print 'x_s ',x_s.get_shape()
-    print 'x ',x.get_shape()
-    print 'x_t ',x_t.get_shape()
-    print 'xt ',xt.get_shape()
+    print('x_s ',x_s.get_shape())
+    print('x ',x.get_shape())
+    print('x_t ',x_t.get_shape())
+    print('xt ',xt.get_shape())
     y = tf.placeholder(tf.float32, [None, NUM_CLASSES],name='y')
     yt = tf.placeholder(tf.float32, [None, NUM_CLASSES],name='yt')
+    print('y ',y.get_shape())
     y_predict, loss = model.loss(x, y)
     # Training accuracy of the model
     source_correct_pred = tf.equal(tf.argmax(y_predict, 1), tf.argmax(y, 1))
@@ -179,52 +185,52 @@ def main(_):
     tf.summary.scalar('Testing Accuracy',accuracy)
     merged=tf.summary.merge_all()
 
-    print '============================GLOBAL TRAINABLE VARIABLES ============================'
-    print tf.trainable_variables()
-    #print '============================GLOBAL VARIABLES ======================================'
+    print('============================GLOBAL TRAINABLE VARIABLES ============================')
+    print(tf.trainable_variables())
+    #print('============================GLOBAL VARIABLES ======================================')
     #print tf.global_variables()
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-	saver=tf.train.Saver()
-	train_writer.add_graph(sess.graph)
+        saver=tf.train.Saver()
+        train_writer.add_graph(sess.graph)
 
         print("{} Start training...".format(datetime.datetime.now()))
-	gd=0
+        gd=0
         step = 1
         max_acc = 0
         times = -time.time()
         error_list = []
-	for epoch in range(40000):
+        for epoch in range(40000):
             # Start training
-	    gd+=1
-	    lamb=adaptation_factor(gd*1.0/40000)
+            gd+=1
+            lamb=adaptation_factor(gd*1.0/40000)
             if FLAGS.unbalance == 1.:
                 lamb2=math.exp(-(1-min((gd - 5000)*1.0/10000, 1.))*10) if gd >= 5000 else 0.
                 if FLAGS.source == "mnist" and FLAGS.target == "usps":
                         lamb2=math.exp(-(1-min((gd - 2000)*1.0/5000, 1.))*10) if gd >= 2000 else 0.
             else:
                 lamb2=math.exp(-(1-min((gd - 2000)*1.0/2000, 1.))*10) if gd >= 2000 else 0.
-	    #rate=decay(FLAGS.learning_rate,gd,MAX_STEP)
-	    rate=FLAGS.learning_rate
-	    batch_xs, batch_ys = TRAIN.next_batch(FLAGS.batch_size)
+            #rate=decay(FLAGS.learning_rate,gd,MAX_STEP)
+            rate=FLAGS.learning_rate
+            batch_xs, batch_ys = TRAIN.next_batch(FLAGS.batch_size)
             Tbatch_xs, Tbatch_ys = VALID.next_batch(FLAGS.batch_size)
-	    
+        
             summary,_,closs,gloss,dloss,sn_loss, chose_rate_=sess.run([merged,optimizer,model.loss,model.G_loss,model.D_loss,model.sntg_loss, model.chose_rate], feed_dict={x_s: batch_xs,x_t: Tbatch_xs,decay_learning_rate:rate,adlamb:lamb,y: batch_ys,yt:Tbatch_ys,sntglamb:lamb2})
-	    train_writer.add_summary(summary,gd)
+            train_writer.add_summary(summary,gd)
 
             step += 1
             if gd%250==0:
-		epoch=gd/(72357/100)
-		print 'Epoch {} time {}s Step {} lambda {:.4f} lamb2 {:.4f} rate {:.4f} C_loss {:.4f} G_loss {:.4f} D_loss {:.4f} SNTG_loss {:.4f} chose_rate {:.4f}'.format(epoch, times+time.time(), gd, lamb, lamb2, rate, closs,gloss,dloss,sn_loss, chose_rate_)
+                epoch=gd/(72357/100)
+                print('Epoch {} time {}s Step {} lambda {:.4f} lamb2 {:.4f} rate {:.4f} C_loss {:.4f} G_loss {:.4f} D_loss {:.4f} SNTG_loss {:.4f} chose_rate {:.4f}'.format(epoch, times+time.time(), gd, lamb, lamb2, rate, closs,gloss,dloss,sn_loss, chose_rate_))
 
                 test_acc = 0.
                 test_count = 0
                 tt_embs = []
                 tt_y = []
-                for _ in xrange((len(TEST.labels))/100):
+                for _ in range(int((len(TEST.labels))/100)):
                     batch_tx, batch_ty = TEST.next_batch(100)
-		    #print TEST.pointer,'   ',TEST.shuffle
+                    #print TEST.pointer,'   ',TEST.shuffle
                     acc, t_embs = sess.run([correct, model.feature], feed_dict={x_t: batch_tx, yt: batch_ty})
                     tt_embs.append(t_embs)
                     tt_y.append(batch_ty)
@@ -240,7 +246,7 @@ def main(_):
                         tt_embs_s = []
                         tt_y_s = []
                         TRAIN.reset_pointer()
-                        for _ in xrange((len(TRAIN.labels))/100):
+                        for _ in range((len(TRAIN.labels))/100):
                             batch_tx, batch_ty = TRAIN.next_batch(100)
                             #print TEST.pointer,'   ',TEST.shuffle
                             t_embs = sess.run(model.source_feature, feed_dict={x_s: batch_tx, y: batch_ty})
@@ -275,8 +281,8 @@ def main(_):
                                                           dir="./embedding",
                                                           file_name='cattsne_manifold_epoch{:03d}.png'.format(gd/5000))
 
-		if gd%5000==0 and gd>0:
-		    print()#error_list
+                if gd%5000==0 and gd>0:
+                    print()#error_list
 
                 times = -time.time()
 

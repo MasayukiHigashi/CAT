@@ -2,7 +2,7 @@ import numpy
 import os
 import sys
 import util
-from urlparse import urljoin
+from urllib.parse import urljoin
 import gzip
 import struct
 import operator
@@ -98,12 +98,12 @@ class USPS:
                 batch_size=10*num_per_class
                 classpaths=[]
                 ids=[]
-                for i in xrange(10):
+                for i in range(10):
                         classpaths.append([])
-                for j in xrange(len(self.labels)):
+                for j in range(len(self.labels)):
                         label=self.labels[j]
                         classpaths[label].append(j)
-                for i in xrange(10):
+                for i in range(10):
                         ids+=np.random.choice(classpaths[i],size=num_per_class,replace=False).tolist()
                 selfimages=np.array(self.images)
                 selflabels=np.array(self.labels)
