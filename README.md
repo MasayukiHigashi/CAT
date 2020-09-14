@@ -1,8 +1,12 @@
+# これ何？
+Cluster Alignment with a Teacher for Unsupervised Domain AdaptationのコードをPython3用に変換しました
+
+
 # CAT (ICCV2019)
 Code for ["Cluster Alignment with a Teacher for Unsupervised Domain Adaptation"](http://openaccess.thecvf.com/content_ICCV_2019/papers/Deng_Cluster_Alignment_With_a_Teacher_for_Unsupervised_Domain_Adaptation_ICCV_2019_paper.pdf) which is based on the official implementation of [MSTN](https://github.com/Mid-Push/Moving-Semantic-Transfer-Network).
 
 # Requirements
-- python2.7
+- python3.5
 - tensorflow == 1.10.0
 
 # Contact
